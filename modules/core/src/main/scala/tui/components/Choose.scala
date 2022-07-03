@@ -22,7 +22,7 @@ case class Choose[A](renderA: A => View) extends TerminalApp[Nothing, Choose.Sta
 
   }
 
-  override def update(state: Choose.State[A], event: TerminalEvent[Nothing]): Step[Choose.State[A], A] =
+  override def update(state: Choose.State[A], event: TerminalEvent[Nothing]): UIO[Step[Choose.State[A], A]] =
     event match {
       case TerminalEvent.SystemEvent(KeyEvent.Up) | TerminalEvent.SystemEvent(KeyEvent.Character('k')) =>
         Step.update(state.moveUp)
