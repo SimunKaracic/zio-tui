@@ -16,16 +16,16 @@ trait TerminalApp[-I, S, +A] { self =>
 
   def render(state: S): View
 
-  def update(state: S, event: TerminalEvent[I]): Step[S, A]
+  def update(state: S, event: TerminalEvent[I]): UIO[Step[S, A]]
 }
 
 object TerminalApp {
   sealed trait Step[+S, +A]
 
   object Step {
-    def update[S](state: S): Step[S, Nothing]   = Update(state)
-    def succeed[A](result: A): Step[Nothing, A] = Done(result)
-    def exit: Step[Nothing, Nothing]            = Exit
+    def update[S](state: S): UIO[Step[S, Nothing]]   = ZIO.succeed(Update(state))
+    def succeed[A](result: A): UIO[Step[Nothing, A]] = ZIO.succeed(Done(result))
+    def exit: UIO[Step[Nothing, Nothing]]            = ZIO.succeed(Exit)
 
     private[tui] case class Update[S](state: S) extends Step[S, Nothing]
     private[tui] case class Done[A](result: A)  extends Step[Nothing, A]
@@ -100,7 +100,7 @@ case class TUILive(
                          }
 
                          stateRef.updateZIO { state =>
-                           terminalApp.update(state, event) match {
+                           terminalApp.update(state, event).flatMap {
                              case Step.Update(state) => ZIO.succeed(state)
                              case Step.Done(result)  => resultPromise.succeed(Some(result)).as(state)
                              case Step.Exit          => resultPromise.succeed(None).as(state)
